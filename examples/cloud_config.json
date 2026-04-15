@@ -1,0 +1,137 @@
+{
+  "provider": "aws",
+  "region": "us-east-1",
+  "account_id": "123456789012",
+
+  "storage": {
+    "s3_buckets": [
+      {
+        "name": "prod-data-primary",
+        "server_side_encryption": {
+          "enabled": true,
+          "algorithm": "AES256",
+          "kms_key_id": null
+        },
+        "public_access_block": true,
+        "versioning_enabled": true
+      },
+      {
+        "name": "prod-data-archive",
+        "server_side_encryption": {
+          "enabled": false
+        },
+        "public_access_block": false,
+        "versioning_enabled": false
+      }
+    ],
+    "ebs_volumes": [
+      {
+        "volume_id": "vol-0a1b2c3d4e5f6a7b8",
+        "description": "Primary application data",
+        "encrypted": true,
+        "encryption_algorithm": "AES-256",
+        "kms_key_id": "arn:aws:kms:us-east-1:123456789012:key/aaaa-1111"
+      },
+      {
+        "volume_id": "vol-9z8y7x6w5v4u3t2s",
+        "description": "Legacy analytics data — migration pending",
+        "encrypted": false,
+        "kms_key_id": null
+      }
+    ]
+  },
+
+  "databases": [
+    {
+      "identifier": "prod-postgres-primary",
+      "engine": "postgres",
+      "engine_version": "15.3",
+      "storage_encrypted": true,
+      "encryption_algorithm": "AES-256",
+      "kms_key_id": "arn:aws:kms:us-east-1:123456789012:key/bbbb-2222",
+      "publicly_accessible": false,
+      "ssl_required": true,
+      "backup_retention_days": 14,
+      "backup_encrypted": true
+    },
+    {
+      "identifier": "dev-mysql-reporting",
+      "engine": "mysql",
+      "engine_version": "8.0.34",
+      "storage_encrypted": false,
+      "kms_key_id": null,
+      "publicly_accessible": true,
+      "ssl_required": false,
+      "backup_retention_days": 0,
+      "backup_encrypted": false
+    }
+  ],
+
+  "load_balancers": [
+    {
+      "name": "prod-alb-external",
+      "type": "application",
+      "scheme": "internet-facing",
+      "listeners": [
+        {
+          "port": 443,
+          "protocol": "HTTPS",
+          "ssl_policy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
+          "certificate_arn": "arn:aws:acm:us-east-1:123456789012:certificate/cccc-3333"
+        },
+        {
+          "port": 80,
+          "protocol": "HTTP",
+          "default_action": "redirect",
+          "redirect_to": "https://#{host}:443/#{path}?#{query}",
+          "redirect_status_code": 301
+        }
+      ]
+    }
+  ],
+
+  "key_management": {
+    "service": "AWS KMS",
+    "keys": [
+      {
+        "key_id": "aaaa-1111",
+        "description": "EBS volume encryption key",
+        "key_material_origin": "AWS_KMS",
+        "exportable": false,
+        "rotation_enabled": true,
+        "rotation_period_days": 365,
+        "access_logging_enabled": true
+      },
+      {
+        "key_id": "bbbb-2222",
+        "description": "RDS encryption key",
+        "key_material_origin": "AWS_KMS",
+        "exportable": false,
+        "rotation_enabled": false,
+        "rotation_period_days": null,
+        "access_logging_enabled": true
+      }
+    ]
+  },
+
+  "certificates": [
+    {
+      "arn": "arn:aws:acm:us-east-1:123456789012:certificate/cccc-3333",
+      "domain": "app.acme-corp.com",
+      "issuer_type": "AMAZON_ISSUED",
+      "key_algorithm": "RSA-2048",
+      "validity_days": 395,
+      "self_signed": false,
+      "expiry_monitoring": {
+        "enabled": true,
+        "alert_days_before_expiry": 45
+      }
+    }
+  ],
+
+  "tls_configuration": {
+    "minimum_protocol_version": "TLSv1.2",
+    "tls_1_0_enabled": false,
+    "tls_1_1_enabled": false
+  }
+}

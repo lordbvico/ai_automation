@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Tool Does
 
-`policy_checker.py` takes a plain-text encryption policy and a cloud-configuration JSON file, sends both to Claude (claude-opus-4-6 with adaptive thinking), and streams a Board-of-Directors-ready Markdown compliance report to stdout.
+`policy_checker.py` takes a plain-text encryption policy and a cloud-configuration JSON file,
+runs a two-phase Claude analysis, and produces a Board-of-Directors-ready Markdown compliance
+report that includes runnable remediation code and Jira tickets for every violation.
 
 ## Running the Tool
 
@@ -23,23 +25,42 @@ python policy_checker.py policy.txt config.json --output board_report.md
 
 ## Architecture
 
-Everything lives in one file — `policy_checker.py`:
+Everything lives in `policy_checker.py`. The tool runs in three phases:
 
-- **`SYSTEM_PROMPT`** — sets Claude's persona as a senior security auditor.
-- **`REPORT_PROMPT`** — injected as the user message; contains the policy text and config JSON verbatim, then prescribes the exact Markdown sections Claude must produce (Executive Summary, Scorecard, Detailed Findings, Risk Summary, Recommendations).
-- **`run()`** — streams the response from `client.messages.stream()` using `thinking: {"type": "adaptive"}`. Thinking blocks are acknowledged to stderr; only `text_delta` events are collected and printed to stdout.
-- **`load_policy()` / `load_config()`** — read and validate the two input files. `load_config` normalises to pretty-printed JSON so the token count is predictable.
+### Phase 1 — Structured compliance analysis
 
-## Key Design Choices
+`_phase1_analyze()` calls `client.messages.parse()` with `thinking: {"type": "adaptive"}` and
+a Pydantic `ComplianceAnalysis` output format. Claude reasons through every numbered policy
+requirement and returns one `PolicyFinding` per requirement — including status, risk level,
+affected resources, evidence, and a brief remediation summary.
 
-- **Adaptive thinking** is enabled so Claude reasons through ambiguous policy language before writing findings. This is the primary lever for report quality.
-- **Streaming** is used because the report can be several thousand tokens; streaming prevents HTTP timeouts and gives the user immediate feedback.
-- **Output goes to stdout** so it can be piped. `--output` is additive (also prints to stdout).
-- **Stderr for diagnostics** — "Reasoning..." and "done." messages go to stderr so they don't pollute the Markdown when the output is piped or redirected.
+### Phase 2 — Per-violation remediation generation
+
+`_phase2_remediate()` is called once per `NON_COMPLIANT` or `PARTIAL` finding. It calls
+`client.messages.parse()` with a `RemediationPackage` output format, asking Claude to produce:
+- **Runnable remediation code** — Python/boto3, Terraform HCL, or Bash/CLI chosen by Claude
+  based on the cloud provider and nature of the fix. Includes dry-run/plan mode.
+- **A Jira ticket** — summary, priority, labels, full description, and acceptance criteria.
+
+### Phase 3 — Report rendering
+
+`_render_report()` combines the `ComplianceAnalysis` and the `remediation_map` into a single
+Markdown document with Executive Summary, Compliance Scorecard, Detailed Findings (one section
+per requirement, with embedded code blocks and Jira ticket), Risk Summary, and Prioritised
+Recommendations sorted by risk severity.
+
+## Pydantic Models
+
+| Model | Purpose |
+|---|---|
+| `PolicyFinding` | One compliance finding per policy requirement |
+| `ComplianceAnalysis` | Full Phase 1 output — overall status + list of findings |
+| `JiraTicket` | Summary, priority, labels, description, acceptance criteria |
+| `RemediationPackage` | Remediation code (language + content) + `JiraTicket` |
 
 ## Sample Files
 
 | File | Purpose |
 |---|---|
 | `examples/encryption_policy.txt` | Five-section policy covering storage, transit, key management, certificates, and databases |
-| `examples/cloud_config.json` | AWS config with intentional gaps (unencrypted S3 bucket, unencrypted EBS volume, publicly-accessible DB) for realistic demo output |
+| `examples/cloud_config.json` | AWS config with intentional gaps (unencrypted S3 bucket, unencrypted legacy EBS volume, publicly-accessible dev DB, disabled key rotation) for realistic demo output |

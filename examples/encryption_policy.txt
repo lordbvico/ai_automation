@@ -1,0 +1,35 @@
+ACME Corporation — Cloud Encryption Policy v2.1
+Effective Date: 2024-01-01 | Owner: Chief Information Security Officer
+
+1. DATA AT REST
+   1.1  All persistent storage volumes must use AES-256 encryption.
+   1.2  Database instances must encrypt data at rest using platform-managed or
+        customer-managed keys (CMKs).
+   1.3  Object-storage buckets must have server-side encryption (SSE) enabled by default.
+   1.4  Encryption keys must be rotated automatically at least every 365 days.
+
+2. DATA IN TRANSIT
+   2.1  All data in transit must use TLS 1.2 or higher.
+   2.2  TLS 1.0 and TLS 1.1 must be explicitly disabled on all endpoints.
+   2.3  Public-facing endpoints must enforce HTTPS-only access (HTTP must redirect to HTTPS
+        or be blocked entirely).
+   2.4  Internal service-to-service communication must use encrypted channels.
+
+3. KEY MANAGEMENT
+   3.1  Encryption keys must be stored in a dedicated, audited key management service
+        (e.g., AWS KMS, Azure Key Vault, GCP Cloud KMS).
+   3.2  All key access and usage must be logged and auditable.
+   3.3  Root and master keys must not be exportable.
+   3.4  Key material must never be stored alongside the data it encrypts.
+
+4. CERTIFICATE MANAGEMENT
+   4.1  SSL/TLS certificates must have a validity period of no more than 398 days.
+   4.2  Certificates must use RSA-2048 or stronger, or ECDSA P-256 or stronger.
+   4.3  Self-signed certificates are prohibited in production environments.
+   4.4  Certificate expiry must be monitored with alerts triggered no later than
+        30 days before expiration.
+
+5. DATABASE SECURITY
+   5.1  Databases must not be publicly accessible from the internet.
+   5.2  Database connections must use SSL/TLS encryption.
+   5.3  Backup data must be encrypted using the same or stronger standard as live data.
