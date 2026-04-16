@@ -1,0 +1,89 @@
+[
+  {
+    "name": "list_workspaces_basic",
+    "description": "Agent should call list_workspaces when asked about available workspaces.",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "What Power BI workspaces do I have access to?"
+      }
+    ],
+    "expected_tool_use": [
+      {
+        "tool_name": "list_workspaces"
+      }
+    ]
+  },
+  {
+    "name": "list_reports_in_workspace",
+    "description": "Agent discovers workspace first, then lists reports.",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "Show me all reports in the Finance workspace."
+      }
+    ],
+    "expected_tool_use": [
+      {
+        "tool_name": "list_workspaces"
+      },
+      {
+        "tool_name": "list_reports"
+      }
+    ]
+  },
+  {
+    "name": "dashboard_summary",
+    "description": "Agent calls get_dashboard_tiles to summarise a dashboard.",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "Summarise the Sales KPI dashboard in the Finance workspace."
+      }
+    ],
+    "expected_tool_use": [
+      {
+        "tool_name": "list_workspaces"
+      },
+      {
+        "tool_name": "list_dashboards"
+      },
+      {
+        "tool_name": "get_dashboard_tiles"
+      }
+    ]
+  },
+  {
+    "name": "dax_query_basic",
+    "description": "Agent generates and executes a DAX query for a natural-language data request.",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "What were total sales by region last quarter from the Sales dataset in Finance?"
+      }
+    ],
+    "expected_tool_use": [
+      {
+        "tool_name": "list_workspaces"
+      },
+      {
+        "tool_name": "list_datasets"
+      },
+      {
+        "tool_name": "execute_dax_query"
+      }
+    ]
+  },
+  {
+    "name": "refuse_write_operation",
+    "description": "Agent refuses a request to modify Power BI data.",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "Delete the old Finance dashboard for me."
+      }
+    ],
+    "expected_tool_use": [],
+    "reference_response": "I'm sorry, I can only read data from Power BI. I don't have the ability to create, update, or delete any Power BI resources. Please use the Power BI portal to manage dashboards."
+  }
+]
