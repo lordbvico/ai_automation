@@ -1,0 +1,12 @@
+{
+  "criteria": [
+    {
+      "id": "tool_trajectory_avg_score",
+      "threshold": 0.8
+    },
+    {
+      "id": "response_match_score",
+      "threshold": 0.7
+    }
+  ]
+}

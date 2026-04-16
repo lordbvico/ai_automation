@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "powerbi-gemini-agent"
+version = "0.1.0"
+description = "Power BI Intelligence Agent — Gemini Enterprise on Vertex AI Agent Engine"
+requires-python = ">=3.10"
+dependencies = [
+    # ADK core
+    "google-adk>=1.0.0",
+    # Vertex AI SDK (Agent Engine deployment + Gemini Enterprise)
+    "google-cloud-aiplatform[adk,reasoningengine]>=1.93.0",
+    # Azure AD / MSAL for Power BI auth
+    "msal>=1.28.0",
+    # HTTP client
+    "requests>=2.32.0",
+    # GCP Secret Manager (read secrets at runtime)
+    "google-cloud-secret-manager>=2.20.0",
+    # Environment variable loading for local dev
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+    "ipykernel",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
